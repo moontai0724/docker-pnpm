@@ -1,9 +1,28 @@
 #!/bin/sh
 
-install() {
-  TEMP_SCRIPT_CONFIG_PATH="$HOME/.temp-shrc"
-  TARGET_PATH="/usr/local/bin"
+TEMP_SCRIPT_CONFIG_PATH="$HOME/.temp-shrc"
+TARGET_PATH="/usr/local/bin"
 
+set_pnpm_variable_and_path() {
+  CURRENT_PNPM_HOME=$(readlink -f "$TARGET_PATH/pnpm")
+
+  # if $PNPM_HOME is set or $CURRENT_PNPM_HOME does not exists, skip
+  if [ -n "$PNPM_HOME" ] || [ ! -f "$CURRENT_PNPM_HOME" ]; then
+    return
+  fi
+
+  echo "Detected existing pnpm installation: $CURRENT_PNPM_HOME"
+  export PNPM_HOME="$CURRENT_PNPM_HOME"
+
+  case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+  esac
+
+  . /dev/null
+}
+
+install() {
   rm -f "$TEMP_SCRIPT_CONFIG_PATH" # remove the temp config file if it exists
   wget -qO- https://get.pnpm.io/install.sh | ENV="$HOME/.temp-shrc" SHELL="$(which sh)" sh -
   unset PNPM_VERSION # delete the version env after it installed
@@ -22,12 +41,6 @@ install() {
     ln -s $PNPM_INSTALLED_PATH/pnpm $TARGET_PATH/pnpm
   fi
 
-  export PNPM_HOME="$PNPM_INSTALLED_PATH"
-  case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
-  esac
-
   echo "Installed pnpm version: $(pnpm --version)"
 }
 
@@ -35,5 +48,7 @@ install() {
 if [ -z "$SKIP_PRE_INSTALL" ]; then
   install
 fi
+
+set_pnpm_variable_and_path
 
 exec "$@"
