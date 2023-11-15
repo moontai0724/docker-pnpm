@@ -23,6 +23,14 @@ set_pnpm_variable_and_path() {
 }
 
 install() {
+  echo "Installing pnpm version: $PNPM_VERSION"
+
+  # if PNPM_VERSION = latest, then unset it. the script will install the latest
+  # version.
+  if [ "$PNPM_VERSION" = "latest" ]; then
+    unset PNPM_VERSION
+  fi
+
   rm -f "$TEMP_SCRIPT_CONFIG_PATH" # remove the temp config file if it exists
   wget -qO- https://get.pnpm.io/install.sh | ENV="$HOME/.temp-shrc" SHELL="$(which sh)" sh -
   unset PNPM_VERSION # delete the version env after it installed
@@ -44,9 +52,11 @@ install() {
   echo "Installed pnpm version: $(pnpm --version)"
 }
 
-# If SKIP_PRE_INSTALL is set, skip pre-installation
-if [ -z "$SKIP_PRE_INSTALL" ]; then
+# if PNPM_VERSION is set, install it
+if [ -n "$PNPM_VERSION" ]; then
   install
+else
+  echo "PNPM_VERSION is not set, skipping installation"
 fi
 
 set_pnpm_variable_and_path

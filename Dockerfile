@@ -1,9 +1,9 @@
 ARG BASE_IMAGE=node:slim
-ARG PNPM_VERSION
 
 FROM ${BASE_IMAGE}
 
-ENV PNPM_VERSION=$PNPM_VERSION
+ARG PNPM_VERSION=latest
+RUN export PNPM_VERSION=$PNPM_VERSION
 
 # Install packages that will use in the installation script
 COPY files/install_requirement.sh /run/install_requirement.sh
